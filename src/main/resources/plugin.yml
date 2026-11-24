@@ -1,0 +1,15 @@
+name: GraveGuard
+version: 1.0.1
+main: com.graveguard.GraveGuardPlugin
+api-version: '1.21'
+author: SecondWindMC
+description: Death graves with owner protection and expiry
+commands:
+  graveguard:
+    description: GraveGuard admin commands
+    aliases: [gg]
+permissions:
+  graveguard.admin:
+    default: op
+  graveguard.bypass:
+    default: op

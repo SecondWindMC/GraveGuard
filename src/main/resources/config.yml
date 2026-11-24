@@ -1,0 +1,20 @@
+# GraveGuard 1.0.0
+grave:
+  # Seconds only the owner (and ops/bypass) can open the grave
+  protection-seconds: 120
+  # Seconds until the grave despawns entirely (0 = never despawn)
+  despawn-seconds: 600
+  # Blocks searched upward from the death point to place the grave
+  max-search-height: 8
+  # Show a floating hologram (owner + time left) above the grave
+  hologram: true
+  # Also store the player's XP in the grave (dropped on open)
+  store-xp: true
+  # Give the owner a compass named "Last Grave" pointing at the grave
+  return-compass: true
+messages:
+  grave-created: "&cYou died! Your items rest in a grave for &f%time%s&c."
+  grave-opened: "&aGrave opened — your items have been returned."
+  grave-protected: "&cThis grave belongs to &f%owner%&c. Protected for &f%time%s&c."
+  grave-broken: "&eYour grave at &f%loc%&e has expired/broken and released your items."
+prefix: "&8[&6GraveGuard&8] "
