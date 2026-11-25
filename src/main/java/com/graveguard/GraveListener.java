@@ -6,8 +6,11 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.BlockBreakEvent;
+import org.bukkit.event.block.BlockExplodeEvent;
+import org.bukkit.event.entity.EntityExplodeEvent;
 import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.event.inventory.InventoryOpenEvent;
+import org.bukkit.event.player.PlayerRespawnEvent;
 import org.bukkit.inventory.ItemStack;
 
 import java.util.ArrayList;
@@ -21,13 +24,24 @@ public final class GraveListener implements Listener {
     public void onDeath(PlayerDeathEvent e) {
         Player p = e.getEntity();
         List<ItemStack> drops = new ArrayList<>(e.getDrops());
-        int xp = e.getDroppedExp();
+        int vanillaXp = e.getDroppedExp();
+        int storedXp = switch (mgr.xpMode()) {
+            case FULL -> XpUtil.currentExperience(p);
+            case VANILLA_DROP -> vanillaXp;
+            case NONE -> 0;
+        };
+
         e.getDrops().clear();
-        e.setDroppedExp(0);
-        if (!mgr.createGrave(p, drops, xp)) {
+        if (mgr.xpMode() != GraveGuardPlugin.XpMode.NONE) e.setDroppedExp(0);
+        if (!mgr.createGrave(p, drops, storedXp)) {
             e.getDrops().addAll(drops);
-            e.setDroppedExp(xp);
+            e.setDroppedExp(vanillaXp);
         }
+    }
+
+    @EventHandler(priority = EventPriority.MONITOR)
+    public void onRespawn(PlayerRespawnEvent e) {
+        mgr.handleRespawn(e.getPlayer());
     }
 
     @EventHandler(ignoreCancelled = true)
@@ -42,13 +56,23 @@ public final class GraveListener implements Listener {
                 .replace("%time%", String.valueOf(g.secondsLeft(System.currentTimeMillis()))));
             return;
         }
-        mgr.openByOwner(p, g);
+        mgr.claim(p, g);
     }
 
     @EventHandler(ignoreCancelled = true)
     public void onBreak(BlockBreakEvent e) {
         if (mgr.get(e.getBlock().getLocation()) == null) return;
         e.setCancelled(true);
-        if (e.getPlayer() != null) mgr.msg(e.getPlayer(), "§cYou cannot break a grave.");
+        mgr.msg(e.getPlayer(), "§cYou cannot break a grave.");
+    }
+
+    @EventHandler(ignoreCancelled = true)
+    public void onEntityExplode(EntityExplodeEvent e) {
+        e.blockList().removeIf(block -> mgr.get(block.getLocation()) != null);
+    }
+
+    @EventHandler(ignoreCancelled = true)
+    public void onBlockExplode(BlockExplodeEvent e) {
+        e.blockList().removeIf(block -> mgr.get(block.getLocation()) != null);
     }
 }

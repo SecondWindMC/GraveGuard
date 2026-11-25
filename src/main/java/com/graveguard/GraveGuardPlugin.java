@@ -4,9 +4,13 @@ import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.plugin.java.JavaPlugin;
 
+import java.util.Locale;
+
 public final class GraveGuardPlugin extends JavaPlugin {
     private GraveManager manager;
     private Config cfg;
+
+    public enum XpMode { FULL, VANILLA_DROP, NONE }
 
     @Override
     public void onEnable() {
@@ -20,12 +24,21 @@ public final class GraveGuardPlugin extends JavaPlugin {
 
     private void load() {
         var c = getConfig();
+        String xpSetting = c.getString("grave.xp-mode",
+                c.getBoolean("grave.store-xp", true) ? "FULL" : "NONE");
+        XpMode xpMode;
+        try {
+            xpMode = XpMode.valueOf(xpSetting.toUpperCase(Locale.ROOT));
+        } catch (IllegalArgumentException ex) {
+            getLogger().warning("Unknown grave.xp-mode '" + xpSetting + "'; using FULL");
+            xpMode = XpMode.FULL;
+        }
         this.cfg = new Config(
             c.getLong("grave.protection-seconds", 120),
             c.getLong("grave.despawn-seconds", 600),
             c.getInt("grave.max-search-height", 8),
             c.getBoolean("grave.hologram", true),
-            c.getBoolean("grave.store-xp", true),
+            xpMode,
             c.getBoolean("grave.return-compass", true)
         );
     }
@@ -41,6 +54,7 @@ public final class GraveGuardPlugin extends JavaPlugin {
         if (args.length == 1 && args[0].equalsIgnoreCase("reload")) {
             reloadConfig();
             load();
+            if (manager != null) manager.updateConfig(cfg);
             sender.sendMessage("GraveGuard config reloaded.");
             return true;
         }
@@ -49,5 +63,5 @@ public final class GraveGuardPlugin extends JavaPlugin {
     }
 
     public record Config(long protectionSeconds, long despawnSeconds, int maxSearchHeight,
-                         boolean hologram, boolean storeXp, boolean returnCompass) {}
+                         boolean hologram, XpMode xpMode, boolean returnCompass) {}
 }
